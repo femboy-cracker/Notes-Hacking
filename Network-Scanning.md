@@ -96,9 +96,9 @@ port list: -p22,80,443
 
 port range: -p1-1023
 
-Alternatively, you can choose to control the packet rate using --min-rate <number> and --max-rate <number>. For example, --max-rate 10 or --max-rate=10 ensures that your scanner is not sending more than ten packets per second.
+packet rate --min-rate <number> and --max-rate <number>
 
-Moreover, you can control probing parallelization using --min-parallelism <numprobes> and --max-parallelism <numprobes>. Nmap probes the targets to discover which hosts are live and which ports are open; probing parallelization specifies the number of such probes that can be run in parallel. For instance, --min-parallelism=512 pushes Nmap to maintain at least 512 probes in parallel; these 512 probes are related to host discovery and open ports.
+probing parallelization using --min-parallelism <numprobes> and --max-parallelism <numprobes>. 
 
 
 Custom scan : 
