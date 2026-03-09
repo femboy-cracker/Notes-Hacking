@@ -145,3 +145,23 @@ To properly understand fragmentation, we need to look at the IP header in the fi
 **Traceroute**
 
 If you want Nmap to find the routers between you and the target, just add `--traceroute`. In the following example, Nmap appended a traceroute to its scan results. Note that Nmap’s traceroute works slightly different than the `traceroute` command found on Linux and macOS or `tracert` found on MS Windows. Standard `traceroute` starts with a packet of low TTL (Time to Live) and keeps increasing until it reaches the target. Nmap’s traceroute starts with a packet of high TTL and keeps decreasing it.
+
+
+You can specify to use any or a group of these installed scripts; moreover, you can install other user’s scripts and use them for your scans. Let’s begin with the default scripts. You can choose to run the scripts in the default category using --script=default or simply adding -sC. In addition to default, categories include auth, broadcast, brute, default, discovery, dos, exploit, external, fuzzer, intrusive, malware, safe, version, and vuln. A brief description is shown in the following table.
+Script Category 	Description
+auth 	Authentication related scripts
+broadcast 	Discover hosts by sending broadcast messages
+brute 	Performs brute-force password auditing against logins
+default 	Default scripts, same as -sC
+discovery 	Retrieve accessible information, such as database tables and DNS names
+dos 	Detects servers vulnerable to Denial of Service (DoS)
+exploit 	Attempts to exploit various vulnerable services
+external 	Checks using a third-party service, such as Geoplugin and Virustotal
+fuzzer 	Launch fuzzing attacks
+intrusive 	Intrusive scripts such as brute-force attacks and exploitation
+malware 	Scans for backdoors
+safe 	Safe scripts that won’t crash the target
+version 	Retrieve service versions
+vuln 	Checks for vulnerabilities or exploit vulnerable services
+
+Some scripts belong to more than one category. Moreover, some scripts launch brute-force attacks against services, while others launch DoS attacks and exploit systems. Hence, it is crucial to be careful when selecting scripts to run if you don’t want to crash services or exploit them.
