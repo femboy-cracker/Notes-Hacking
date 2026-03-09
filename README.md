@@ -1,1 +1,1 @@
-This is noted f
+This is notes for my hacking journey
