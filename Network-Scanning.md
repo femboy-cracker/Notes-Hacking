@@ -141,3 +141,7 @@ To properly understand fragmentation, we need to look at the IP header in the fi
 -d 	debugging
 
 -dd 	more details for debugging
+
+**Traceroute**
+
+If you want Nmap to find the routers between you and the target, just add `--traceroute`. In the following example, Nmap appended a traceroute to its scan results. Note that Nmap’s traceroute works slightly different than the `traceroute` command found on Linux and macOS or `tracert` found on MS Windows. Standard `traceroute` starts with a packet of low TTL (Time to Live) and keeps increasing until it reaches the target. Nmap’s traceroute starts with a packet of high TTL and keeps decreasing it.
