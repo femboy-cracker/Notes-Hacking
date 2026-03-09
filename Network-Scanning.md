@@ -150,19 +150,34 @@ If you want Nmap to find the routers between you and the target, just add `--tra
 You can specify to use any or a group of these installed scripts; moreover, you can install other user’s scripts and use them for your scans. Let’s begin with the default scripts. You can choose to run the scripts in the default category using --script=default or simply adding -sC. In addition to default, categories include auth, broadcast, brute, default, discovery, dos, exploit, external, fuzzer, intrusive, malware, safe, version, and vuln. A brief description is shown in the following table.
 
 Script Category 	Description
+
 auth 	Authentication related scripts
+
 broadcast 	Discover hosts by sending broadcast messages
+
 brute 	Performs brute-force password auditing against logins
+
 default 	Default scripts, same as -sC
-discovery 	Retrieve accessible information, such as database tables and DNS names
+
+discovery 	Retrieve accessible information, such as database 
+tables and DNS names
+
 dos 	Detects servers vulnerable to Denial of Service (DoS)
+
 exploit 	Attempts to exploit various vulnerable services
+
 external 	Checks using a third-party service, such as Geoplugin and Virustotal
+
 fuzzer 	Launch fuzzing attacks
+
 intrusive 	Intrusive scripts such as brute-force attacks and exploitation
+
 malware 	Scans for backdoors
+
 safe 	Safe scripts that won’t crash the target
+
 version 	Retrieve service versions
+
 vuln 	Checks for vulnerabilities or exploit vulnerable services
 
 Some scripts belong to more than one category. Moreover, some scripts launch brute-force attacks against services, while others launch DoS attacks and exploit systems. Hence, it is crucial to be careful when selecting scripts to run if you don’t want to crash services or exploit them.
