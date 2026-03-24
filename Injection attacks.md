@@ -1,4 +1,4 @@
-### BASIC SQL INJECTION
+###  SQL INJECTION
 #### **SQL Injection 1: Input Box Non-String**
 
 When a user logs in, the application performs the following query:
@@ -145,7 +145,7 @@ The passwords can also be retrieved by decoding the Flask session cookie:
 
 }
 
-#### Goal
+#### **BLIND SQL INJECTION**
 
 This challenge has the same vulnerability as the previous one. However, it is no longer possible to extract data from the Flask session cookie or via the username display. The login form still has the same vulnerability, but this time the goal is to abuse the login form with blind injection to extract the admin's password.
 
@@ -233,6 +233,6 @@ $  -u ://10.49.141.158:5000/challenge3/login --data="username=admin&password
 
 ![](https://assets.tryhackme.com/additional/imgur/Zd65ZQP.png)  
 
-### Task
+##### Task
 
 Exploit the vulnerable login form and retrieve the flag.
