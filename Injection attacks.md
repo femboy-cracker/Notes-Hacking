@@ -227,7 +227,7 @@ Also, the script requires an unnecessary amount of requests. An extra challenge 
 
 An alternative way to solve this challenge is by using a tool such as , which is an open source tool that automates the process of detecting and exploiting injection flaws. The following command can be used to exploit the vulnerability with :
 
-$  -u ://10.49.141.158:5000/challenge3/login --data="username=admin&password=admin" 
+$  sqlmap -u ://10.49.141.158:5000/challenge3/login --data="username=admin&password=admin" 
 
 --level=5 --risk=3 --dbms=sqlite --technique=b --dump
 
