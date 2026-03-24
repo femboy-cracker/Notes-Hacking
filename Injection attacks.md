@@ -54,7 +54,7 @@ The browser will automatically urlencode this for us. Urlencoding is needed sinc
 The %27 becomes the single quote (') character and %20 becomes a blank space.
 
 #### **SQL Injection 4: POST Injection**
-#### 
+
 When submitting the login form for this challenge, it uses the POST method. It is possible to either remove/disable the JavaScript validating the login form or submit a valid request and intercept it with a tool such as burp or zap and modify it:
 
 [![](https://assets.tryhackme.com/additional/imgur/LRnr2WQ.png)](https://assets.tryhackme.com/additional/imgur/LRnr2WQ.png)
