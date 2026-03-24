@@ -60,8 +60,7 @@ When submitting the login form for this challenge, it uses the POST method. It i
 [![](https://assets.tryhackme.com/additional/imgur/LRnr2WQ.png)](https://assets.tryhackme.com/additional/imgur/LRnr2WQ.png)
 
 
-####
-#### Goal
+#### **Vulnerable Book Title**
 
 A new function has been added to the page, and it is now possible to search books in the database. The new search function is vulnerable to injection because it concatenates the user input directly into the statement. The goal of the task is to abuse this vulnerability to find the hidden flag.  
 
@@ -83,10 +82,10 @@ All we need to do to abuse this is closing the LIKE operand to the right of the 
 
 ') or 1=1-- -
 
-### Task
+##### Task
 
 Use what you learned about UNION-based injection and exploit the vulnerable book search function to retrieve the flag.
-#### **Vulnerable update func**
+#### **Vulnerable update function**
 
 For this challenge, the vulnerability on the note page has been fixed. A new change password function has been added to the application, so the users can now change their password by navigating to the Profile page. The new function is vulnerable to injection because the UPDATE statement concatenates the username directly into the query, as can be seen below. The goal here is to exploit the vulnerable function to gain access to the admin's account.  
 
