@@ -145,12 +145,11 @@ The passwords can also be retrieved by decoding the Flask session cookie:
 
 }
 
-####
-#### Goal
+#### *Vulnerable notes*
 
 Here, the previous vulnerabilities have been fixed, and the login form is no longer vulnerable to injection. The team has added a new note function, allowing users to add notes on their page. The goal of this challenge is to find the vulnerability and dump the database to find the flag.  
 
-### Description
+##### Description
 
 By registering a new account and logging in to the application, the user can navigate to the new note function by clicking "Notes" in the top left menu. Here, it is possible to add new notes, and all the user's notes are listed on the bottom of the page, as seen here:
 
