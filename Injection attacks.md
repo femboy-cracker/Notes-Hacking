@@ -59,7 +59,7 @@ When submitting the login form for this challenge, it uses the POST method. It i
 
 [![](https://assets.tryhackme.com/additional/imgur/LRnr2WQ.png)](https://assets.tryhackme.com/additional/imgur/LRnr2WQ.png)
 
-#### SQL INJECTIONction Union
+#### **SQL INJECTION Union**
 
 
 This challenge builds upon the previous challenge. Here, the goal is to find a way to dump all the passwords in the database to retrieve the flag without using blind injection.
@@ -144,3 +144,95 @@ The passwords can also be retrieved by decoding the Flask session cookie:
     "challenge2_username": "rcLYWHCxeGUsA9tH3GNV,asd,Summer2019!,345m3io4hj3,{AuTh2},viking123"
 
 }
+
+#### Goal
+
+This challenge has the same vulnerability as the previous one. However, it is no longer possible to extract data from the Flask session cookie or via the username display. The login form still has the same vulnerability, but this time the goal is to abuse the login form with blind injection to extract the admin's password.
+
+##### Description
+
+Boolean-based blind injection will be used to extract the password. Blind injections are tedious and time-consuming to do manually, so the plan is to build a script to extract the password character by character. Before making a script to automate the injection, it is vital to understand how the injection works. The idea is to send a query asking true or false questions for each character in the password. The application's response will be analyzed to understand whether the database returned true or false. In this case, the application will let us in if the response is successful, or it will stay on the login page saying, "Invalid username or password" in the case it returns false, as seen in the image below.
+
+![](https://assets.tryhackme.com/additional/imgur/ma1IrzN.png)
+
+As previously stated, we will want to send boolean questions to the database for each character in the password, asking the database whether we have guessed the correct character or not. To achieve this, we will need a way to control which character we are at and increment it every time we have guessed the correct character at the current position. SQLite's [substr (opens in new tab)](https://sqlite.org/lang_corefunc.html#substr) function can help us achieve this functionality.
+
+"The SQLite substr function returns a substring from a string starting at a specified position with a predefined length." ([SQLite Tutorial (opens in new tab)](https://www.sqlitetutorial.net/sqlite-functions/sqlite-substr/))
+
+The first argument to [substr (opens in new tab)](https://sqlite.org/lang_corefunc.html#substr) is the string itself, which will be the admin's password. The second argument is the starting position, and the third argument is the length of the substring that will be returned.
+
+SUBSTR( string, <start>, <length>)
+
+Below is an example of [substr (opens in new tab)](https://sqlite.org/lang_corefunc.html#substr) in action - the character after the equal (=) sign demonstrates the substring returned.
+
+-- Changing start
+
+SUBSTR("{Blind}", 1,1) = T
+
+SUBSTR("{Blind}", 2,1) = H
+
+SUBSTR("{Blind}", 3,1) = M
+
+  
+
+-- Changing length
+
+SUBSTR("{Blind}", 1,3) = 
+
+The next step will be to enter the admin's password as a string into the [substr (opens in new tab)](https://sqlite.org/lang_corefunc.html#substr) function. This can be achieved with the following query:
+
+(SELECT password FROM users LIMIT 0,1)
+
+  
+
+The [LIMIT (opens in new tab)](https://sqlite.org/lang_select.html#limitoffset) clause is used to limit the amount of data returned by the SELECT statement. The first number, 0, is the offset and the second integer is the limit:
+
+LIMIT <OFFSET>, <LIMIT>
+
+Below are a few examples of the [LIMIT (opens in new tab)](https://sqlite.org/lang_select.html#limitoffset) clause in action. The right table represents the user table.
+
+|   |   |
+|---|---|
+|sqlite> SELECT password FROM users LIMIT 0,1<br><br>{Blind}<br><br>sqlite> SELECT password FROM users LIMIT 1,1<br><br>Summer2019!<br><br>sqlite> SELECT password FROM users LIMIT 0,2<br><br>{Blind}<br><br>Summer2019!|\|   \|<br>\|---\|<br>\|{Blind}\|<br>\|Summer2019!\|<br>\|Viking123\||
+
+The query to return the first character of the admin's password can be seen here:
+
+SUBSTR((SELECT password FROM users LIMIT 0,1),1,1)
+
+Now we will need a way to compare the first character of the password with our guessed value. Comparing the characters are easy, and we could do it as follows:
+
+SUBSTR((SELECT password FROM users LIMIT 0,1),1,1) = 'T'
+
+However, whether this approach works or not will be depending on how the application handles the inputs. The application will convert the username to lowercase for this challenge, which breaks the mentioned approach since capital T is not the same as lowercase t. The hex representation of ASCII T is 0x54 and 0x74 for lowercase t. To deal with this, we can input our character as hex representation via the substitution type [X (opens in new tab)](https://www.sqlite.org/printf.html#substitution_types) and then use SQLite's [CAST (opens in new tab)](https://sqlite.org/lang_expr.html#castexpr) expression to convert the value to the datatype the database expects.
+
+"x,X: The argument is an integer which is displayed in hexadecimal. Lower-case hexadecimal is used for %x and upper-case is used for %X" - ([sqlite.org (opens in new tab)](https://www.sqlite.org/printf.html#substitution_types))
+
+This means that we can input T as X'54'. To convert the value to SQLite's Text type, we can use the CAST expression as follows: CAST(X'54' as Text). Our final query now looks as follows:  
+
+SUBSTR((SELECT password FROM users LIMIT 0,1),1,1) = CAST(X'54' as Text)
+
+Before using the query we have built, we will need to make it fit in with the original query. Our query will be placed in the username field. We can close the username parameter by adding a single quote (') and then append an AND operator to add our condition to it. Then append two dashes (--) to comment out the password check at the end of the query. With this done, our malicious query look as follows:
+
+admin' AND SUBSTR((SELECT password FROM users LIMIT 0,1),1,1) = CAST(X'54' as Text)-- -
+
+When this is injected into the username field, the final query executed by the database will be:
+
+SELECT id, username FROM users WHERE username = 'admin' AND SUBSTR((SELECT password FROM users LIMIT 0,1),1,1) = CAST(X'54' as Text)
+
+If the application responds with a 302 redirect, then we have found the password's first character. To get the entire password, the attacker must inject multiple tests for each character in the password. Testing every single character is tedious and is more easily achieved with a script. One easy solution is to loop over every possible ASCII character and compare it with the database's character. The mentioned method generates a lot of traffic toward the target and is not the most efficient method. An example script is provided inside the machine and can be view and downloaded by going to [://10.49.141.158:5000/view/challenge3/challenge3-exploit.py (opens in new tab)](http://10.49.141.158:5000/view/challenge3/challenge3-exploit.py); note that it will be necessary to change the password length with the password_len variable. The length of the password can be found by asking the database. For example, in the query below, we ask the database if the length of the password equals 37:
+
+admin' AND length((SELECT password from users where username='admin'))==37-- -
+
+Also, the script requires an unnecessary amount of requests. An extra challenge could be to build a more efficient tool to retrieve the password.
+
+An alternative way to solve this challenge is by using a tool such as , which is an open source tool that automates the process of detecting and exploiting injection flaws. The following command can be used to exploit the vulnerability with :
+
+$  -u ://10.49.141.158:5000/challenge3/login --data="username=admin&password=admin" 
+
+--level=5 --risk=3 --dbms=sqlite --technique=b --dump
+
+![](https://assets.tryhackme.com/additional/imgur/Zd65ZQP.png)  
+
+### Task
+
+Exploit the vulnerable login form and retrieve the flag.
