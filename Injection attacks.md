@@ -60,7 +60,7 @@ When submitting the login form for this challenge, it uses the POST method. It i
 [![](https://assets.tryhackme.com/additional/imgur/LRnr2WQ.png)](https://assets.tryhackme.com/additional/imgur/LRnr2WQ.png)
 
 
-#### **Vulnerable update**
+#### **Vulnerable update func**
 
 For this challenge, the vulnerability on the note page has been fixed. A new change password function has been added to the application, so the users can now change their password by navigating to the Profile page. The new function is vulnerable to injection because the UPDATE statement concatenates the username directly into the query, as can be seen below. The goal here is to exploit the vulnerable function to gain access to the admin's account.  
 
